@@ -1,0 +1,100 @@
+import * as THREE from 'three';
+
+// --- AETHERIS-7 UNIT COMPONENT ---
+export function createAetherisUnit() {
+    const unitGroup = new THREE.Group();
+
+    // 1. EXTERNAL EXOSKELETON (7m Scale)
+    const frameGeom = new THREE.BoxGeometry(2.5, 7, 2.5);
+    const frameMat = new THREE.MeshPhongMaterial({
+        color: 0x111111,
+        shininess: 100,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide
+    });
+    const frame = new THREE.Mesh(frameGeom, frameMat);
+    
+    // Wireframe overlay for "High-Tech" industrial look
+    const edges = new THREE.EdgesGeometry(frameGeom);
+    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x00d4ff }));
+    unitGroup.add(frame, line);
+
+    // 2. INTERNAL ELECTROSTATIC CORE (3M Tech)
+    const coreGeom = new THREE.CylinderGeometry(0.8, 0.8, 6, 32);
+    const coreMat = new THREE.MeshPhongMaterial({
+        color: 0x00d4ff,
+        emissive: 0x00d4ff,
+        emissiveIntensity: 1.5,
+        transparent: true,
+        opacity: 0.4
+    });
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    core.position.y = 0;
+    unitGroup.add(core);
+
+    // 3. INTERNAL FILTRATION PLATES
+    for (let i = 0; i < 12; i++) {
+        const plateGeom = new THREE.TorusGeometry(0.7, 0.02, 16, 100);
+        const plateMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
+        const plate = new THREE.Mesh(plateGeom, plateMat);
+        plate.rotation.x = Math.PI / 2;
+        plate.position.y = -3 + (i * 0.5);
+        unitGroup.add(plate);
+    }
+
+    // 4. THE SIGNATURE NEON HALO (Apex)
+    const haloGeom = new THREE.TorusGeometry(1.5, 0.05, 16, 100);
+    const haloMat = new THREE.MeshBasicMaterial({ 
+        color: 0x00f3ff,
+        transparent: true,
+        opacity: 0.8 
+    });
+    const halo = new THREE.Mesh(haloGeom, haloMat);
+    halo.rotation.x = Math.PI / 2;
+    halo.position.y = 3.8;
+    halo.name = "Halo"; // Accessible for animation
+    unitGroup.add(halo);
+
+    // 5. BASE INDUCTION UNIT
+    const baseGeom = new THREE.CylinderGeometry(1.5, 1.8, 1, 4);
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+    const base = new THREE.Mesh(baseGeom, baseMat);
+    base.position.y = -3.5;
+    unitGroup.add(base);
+
+    return unitGroup;
+}
+
+// --- SCENE IMPLEMENTATION ---
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const unit = createAetherisUnit();
+scene.add(unit);
+
+const light = new THREE.PointLight(0x00d4ff, 2, 50);
+light.position.set(5, 5, 5);
+scene.add(light, new THREE.AmbientLight(0x404040));
+
+camera.position.set(0, 2, 12);
+
+// --- ANIMATION LOOP (Atmospheric Sync) ---
+function animate(time) {
+    requestAnimationFrame(animate);
+    
+    // Halo Breathing effect (Syncs with "Atmospheric mastery" theme)
+    const halo = unit.getObjectByName("Halo");
+    if (halo) {
+        const s = 1 + Math.sin(time * 0.002) * 0.1;
+        halo.scale.set(s, s, s);
+        halo.material.opacity = 0.5 + Math.sin(time * 0.002) * 0.3;
+    }
+
+    unit.rotation.y += 0.005;
+    renderer.render(scene, camera);
+}
+animate();
